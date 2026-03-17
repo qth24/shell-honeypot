@@ -2,34 +2,50 @@ services:
   cowrie:
     image: cowrie/cowrie:latest
     container_name: honeypot-cowrie
+    init: true
     restart: unless-stopped
     volumes:
       - ./cowrie/cowrie.cfg:/cowrie/cowrie-git/etc/cowrie.cfg:ro
       - ./cowrie/userdb.txt:/cowrie/cowrie-git/etc/userdb.txt:ro
-      - ./data/cowrie/log:/cowrie/cowrie-git/var/log
-      - ./data/cowrie/lib:/cowrie/cowrie-git/var/lib
-    expose:
-      - "2222"
-      - "2223"
+      - cowrie-log:/cowrie/cowrie-git/var/log
+      - cowrie-lib:/cowrie/cowrie-git/var/lib
     ports:
-      - "127.0.0.1:2222:2222"
-      - "127.0.0.1:2223:2223"
+      - "${COWRIE_SSH_BIND_ADDRESS:-127.0.0.1}:${COWRIE_SSH_PORT:-2222}:2222"
+      - "${COWRIE_TELNET_BIND_ADDRESS:-127.0.0.1}:${COWRIE_TELNET_PORT:-2223}:2223"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.create_connection(('127.0.0.1', 2223), 5); s.close()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
 
   web:
     build:
       context: .
       dockerfile: Dockerfile.web
     container_name: honeypot-web
+    init: true
     restart: unless-stopped
     environment:
       APP_HOST: 0.0.0.0
       APP_PORT: 7788
       COWRIE_HOST: cowrie
       COWRIE_PORT: 2223
-      SHELL_BANNER: Cowrie Web Console
-      AUTO_LOGIN_USERNAME: root
-      AUTO_LOGIN_PASSWORD: 123
+      SHELL_BANNER: ${SHELL_BANNER:-Cowrie Web Console}
+      AUTO_LOGIN_USERNAME: ${AUTO_LOGIN_USERNAME:-root}
+      AUTO_LOGIN_PASSWORD: ${AUTO_LOGIN_PASSWORD:-123}
     depends_on:
-      - cowrie
+      cowrie:
+        condition: service_healthy
     ports:
-      - "127.0.0.1:7788:7788"
+      - "${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-7788}:7788"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:7788/healthz')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+volumes:
+  cowrie-log:
+  cowrie-lib:

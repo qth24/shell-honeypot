@@ -34,6 +34,29 @@ def _auto_login_enabled() -> bool:
     return env("AUTO_LOGIN_USERNAME", "").strip() != ""
 
 
+async def connect_to_cowrie(host: str, port: int, retries: int = 15, delay: float = 2.0) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
+    last_error: OSError | None = None
+
+    for attempt in range(1, retries + 1):
+        try:
+            return await asyncio.open_connection(host, port)
+        except OSError as exc:
+            last_error = exc
+            logger.warning(
+                "connect to cowrie failed attempt=%s/%s host=%s port=%s error=%s",
+                attempt,
+                retries,
+                host,
+                port,
+                exc,
+            )
+            if attempt < retries:
+                await asyncio.sleep(delay)
+
+    assert last_error is not None
+    raise last_error
+
+
 @app.get("/healthz")
 async def healthz() -> JSONResponse:
     return JSONResponse(
@@ -173,7 +196,7 @@ async def websocket_shell(ws: WebSocket) -> None:
     port = int(env("COWRIE_PORT", "2223"))
 
     try:
-        reader, writer = await asyncio.open_connection(host, port)
+        reader, writer = await connect_to_cowrie(host, port)
     except OSError as exc:
         await ws.send_text(f"\r\n[bridge] Unable to reach Cowrie at {host}:{port}: {exc}\r\n")
         await ws.close(code=1011)
