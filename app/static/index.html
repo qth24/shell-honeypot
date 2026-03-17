@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terminal</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/xterm@5.5.0/css/xterm.min.css"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="terminal-card">
+        <div id="terminal" class="terminal-output" aria-live="polite"></div>
+        <form id="fallback-form" class="terminal-form is-hidden" autocomplete="off">
+          <label for="fallback-input" class="prompt">$</label>
+          <input
+            id="fallback-input"
+            name="command"
+            type="text"
+            spellcheck="false"
+            autofocus
+          />
+        </form>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.5.0/lib/xterm.min.js"></script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

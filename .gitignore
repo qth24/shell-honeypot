@@ -1,0 +1,9 @@
+app/__pycache__/
+*.pyc
+
+data/cowrie/log/cowrie/*.log
+data/cowrie/log/cowrie/*.json
+data/cowrie/lib/cowrie/ssh_host_*
+data/cowrie/lib/cowrie/uuid
+data/cowrie/lib/cowrie/tty/*
+!data/cowrie/lib/cowrie/tty/.gitkeep

@@ -1,0 +1,35 @@
+services:
+  cowrie:
+    image: cowrie/cowrie:latest
+    container_name: honeypot-cowrie
+    restart: unless-stopped
+    volumes:
+      - ./cowrie/cowrie.cfg:/cowrie/cowrie-git/etc/cowrie.cfg:ro
+      - ./cowrie/userdb.txt:/cowrie/cowrie-git/etc/userdb.txt:ro
+      - ./data/cowrie/log:/cowrie/cowrie-git/var/log
+      - ./data/cowrie/lib:/cowrie/cowrie-git/var/lib
+    expose:
+      - "2222"
+      - "2223"
+    ports:
+      - "2222:2222"
+      - "2223:2223"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: honeypot-web
+    restart: unless-stopped
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 7788
+      COWRIE_HOST: cowrie
+      COWRIE_PORT: 2223
+      SHELL_BANNER: Cowrie Web Console
+      AUTO_LOGIN_USERNAME: root
+      AUTO_LOGIN_PASSWORD: 123
+    depends_on:
+      - cowrie
+    ports:
+      - "7788:7788"
